@@ -1,24 +1,26 @@
 <template>
-  <LMap
-    style="height: 350px"
-    :zoom="zoom"
-    :center="center"
-    :use-global-leaflet="false"
-  >
-    <!-- Tile layer -->
-    <LTileLayer
-      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      attribution='&amp;copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
-    />
-    <!-- Markers -->
-    <LMarker
-      v-for="(point, index) in selectedPoints"
-      :key="index"
-      :lat-lng="point"
-    />
-    <!-- Polyline for route -->
-    <LPolyline :lat-lngs="route" v-if="route.length" />
-  </LMap>
+  <div>
+    <div v-if="loading">Loading routes...</div>
+    <div v-else>
+      <LMap
+        style="height: 350px"
+        :zoom="zoom"
+        :center="center"
+        :use-global-leaflet="false"
+      >
+        <LTileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&amp;copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+        />
+        <LMarker
+          v-for="(point, index) in selectedPoints"
+          :key="index"
+          :lat-lng="point"
+        />
+        <LPolyline :lat-lngs="route" v-if="route.length" />
+      </LMap>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -26,8 +28,22 @@ import { ref, watch, onMounted } from "vue";
 import { useRouteStore } from "@/stores/routes";
 import { storeToRefs } from "pinia";
 
+const loading = ref(true);
 const routeStore = useRouteStore();
 const { selectedRoute, routes } = storeToRefs(routeStore);
+
+// Fetch both routes and points data
+const [{ data: routesData }, { data: pointsData }] = await Promise.all([
+  useFetch("/api/routes"),
+  useFetch("/api/points"),
+]);
+
+// Initialize store with both datasets
+if (pointsData.value && routesData.value) {
+  routeStore.setPoints(pointsData.value);
+  routeStore.setRoutesFromDB(routesData.value);
+}
+loading.value = false;
 
 // Center point and zoom level
 const center = ref([51.867094010160336, 6.485649003772237]);
@@ -45,7 +61,6 @@ const fetchRoute = (points) => {
     "https://api.openrouteservice.org/v2/directions/foot-walking/geojson";
 
   const request = new XMLHttpRequest();
-
   request.open("POST", url);
 
   request.setRequestHeader(
@@ -60,7 +75,6 @@ const fetchRoute = (points) => {
       if (this.status === 200) {
         try {
           const data = JSON.parse(this.responseText);
-          // Extract the route geometry
           route.value = data.features[0].geometry.coordinates.map(
             ([lng, lat]) => [lat, lng]
           );
@@ -74,7 +88,7 @@ const fetchRoute = (points) => {
   };
 
   const body = JSON.stringify({
-    coordinates: points.map(([lat, lng]) => [lng, lat]), // Reverse lat/lng to lng/lat
+    coordinates: points.map(([lat, lng]) => [lng, lat]),
   });
 
   request.send(body);
@@ -84,9 +98,9 @@ const fetchRoute = (points) => {
 watch(selectedRoute, (newRoute) => {
   if (newRoute && routes.value[newRoute]) {
     const { center: newCenter, points } = routes.value[newRoute];
-    center.value = newCenter; // Update map center
-    selectedPoints.value = points; // Update markers
-    fetchRoute(points); // Fetch the route
+    center.value = newCenter;
+    selectedPoints.value = points;
+    fetchRoute(points);
   }
 });
 
@@ -100,10 +114,3 @@ onMounted(() => {
   }
 });
 </script>
-
-<style>
-.map-wrapper {
-  width: 100%;
-  height: 100%;
-}
-</style>

@@ -1,45 +1,61 @@
 // stores/routes.js
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 export const useRouteStore = defineStore("routes", () => {
-  // Available routes
-  const routes = ref({
-    Dinxperlo: {
-      center: [51.861217, 6.486893],
-      points: [
-        [51.860764, 6.485223],
-        [51.862542, 6.489167],
-        [51.864324, 6.488324],
-      ],
-    },
-    Ulft: {
-      center: [51.890223, 6.376982],
-      points: [
-        [51.891234, 6.375132],
-        [51.892543, 6.380234],
-        [51.887653, 6.379234],
-      ],
-    },
-    Aalten: {
-      center: [51.926235, 6.580284],
-      points: [
-        [51.924522, 6.578121],
-        [51.928124, 6.583452],
-        [51.930212, 6.577893],
-      ],
-    },
-  });
+  const routes = ref({});
+  const selectedRoute = ref("");
+  const points = ref(new Map()); // Store points in a Map for efficient lookup
 
-  // Selected route
-  const selectedRoute = ref("Dinxperlo");
+  // Set points data
+  const setPoints = (pointsData) => {
+    pointsData.forEach((point) => {
+      points.value.set(point.id, point);
+    });
+  };
+
+  // Transform MongoDB data to the format the map expects
+  const setRoutesFromDB = (dbRoutes) => {
+    const transformedRoutes = {};
+
+    dbRoutes.forEach((route) => {
+      // Get coordinates for each point in the route
+      const routePoints = route.routePoints
+        .sort((a, b) => a.order - b.order) // Sort by order
+        .map((routePoint) => {
+          const point = points.value.get(routePoint.pointId);
+          if (point) {
+            return [point.coordinates.latitude, point.coordinates.longitude];
+          }
+          return null;
+        })
+        .filter((point) => point !== null); // Remove any points that weren't found
+
+      transformedRoutes[route.id] = {
+        center: route.center,
+        points: routePoints,
+        name: route.name,
+        description: route.description,
+        estimatedDistance: route.estimatedDistance,
+        isFav: route.isFav,
+      };
+    });
+
+    routes.value = transformedRoutes;
+    // Set initial selected route if none is selected
+    if (!selectedRoute.value && Object.keys(transformedRoutes).length > 0) {
+      selectedRoute.value = Object.keys(transformedRoutes)[0];
+    }
+  };
 
   // Computed property: get current route details
-  const currentRoute = () => routes.value[selectedRoute.value];
+  const currentRoute = computed(() => routes.value[selectedRoute.value]);
 
   return {
     routes,
     selectedRoute,
     currentRoute,
+    setRoutesFromDB,
+    setPoints,
   };
 });
