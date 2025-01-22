@@ -1,4 +1,3 @@
-// stores/routes.js
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 
