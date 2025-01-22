@@ -32,20 +32,18 @@ const loading = ref(true);
 const routeStore = useRouteStore();
 const { selectedRoute, routes } = storeToRefs(routeStore);
 
-// Fetch both routes and points data
+// both routes and points data
 const [{ data: routesData }, { data: pointsData }] = await Promise.all([
   useFetch("/api/routes"),
   useFetch("/api/points"),
 ]);
 
-// Initialize store with both datasets
 if (pointsData.value && routesData.value) {
   routeStore.setPoints(pointsData.value);
   routeStore.setRoutesFromDB(routesData.value);
 }
 loading.value = false;
 
-// Center point and zoom level
 const center = ref([51.867094010160336, 6.485649003772237]);
 const zoom = ref(13);
 
