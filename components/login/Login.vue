@@ -1,4 +1,3 @@
-// components/login/Login.vue
 <template>
   <GoogleSignInButton
     v-if="!isAuthenticated"
@@ -18,22 +17,23 @@ import { useUserStore } from "~/stores/users";
 import { storeToRefs } from "pinia";
 
 const userStore = useUserStore();
-const { isAuthenticated } = storeToRefs(userStore);
+const { isAuthenticated, userData, userFavorites } = storeToRefs(userStore);
 const userName = ref("");
 
 const handleLoginSuccess = async (response) => {
   const { credential } = response;
 
   try {
-    // Send credential to our backend
     const { data } = await useFetch("/api/auth/google", {
       method: "POST",
       body: { credential },
     });
 
     if (data.value) {
-      userStore.setUser(data.value.user);
-      userName.value = data.value.user.name;
+      const userDb = await userStore.getUser(data.value.user.id);
+      userData.value = userDb.user;
+      userFavorites.value = userDb.user.favorites;
+      userName.value = userDb.user.name;
     }
   } catch (error) {
     console.error("Login failed:", error);

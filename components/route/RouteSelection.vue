@@ -11,13 +11,13 @@
       </option>
     </select>
 
-    <div v-if="selectedRoute" class="mt-4">
+    <div v-if="isAuthenticated" class="mt-4">
       <label for="fav-checkbox" class="mt-2">Favorite</label>
       <input
         id="fav-checkbox"
         type="checkbox"
-        v-model="routes[selectedRoute].isFav"
-        @change="toggleFav"
+        :checked="isFavorite"
+        @change="handleFavoriteToggle"
       />
     </div>
   </div>
@@ -25,36 +25,33 @@
 
 <script setup>
 import { useRouteStore } from "@/stores/routes";
+import { useUserStore } from "@/stores/users";
 import { storeToRefs } from "pinia";
-import { watch } from "vue";
+import { watch, computed } from "vue";
 
 const routeStore = useRouteStore();
+const userStore = useUserStore();
+
 const { routes, selectedRoute } = storeToRefs(routeStore);
+const { userFavorites, isAuthenticated } = storeToRefs(userStore);
 
 watch(selectedRoute, (newRoute) => {
   console.log(`Selected Route: ${newRoute}`);
 });
 
-const toggleFav = async () => {
-  const selectedRouteId = selectedRoute.value;
-  if (!selectedRouteId) return;
+const isFavorite = computed(() => {
+  if (!selectedRoute.value) return false;
+  return userFavorites.value.includes(selectedRoute.value);
+});
 
-  const isFav = routes.value[selectedRouteId]?.isFav;
+const handleFavoriteToggle = async () => {
+  const selectedRouteId = selectedRoute.value;
+  if (!selectedRoute.value) return;
 
   try {
-    const response = await fetch(
-      `${
-        import.meta.env.VITE_API_URL
-      }/api/routes/${selectedRouteId}/toggle-fav`,
-      {
-        method: "POST",
-        body: JSON.stringify({ isFav }),
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-    console.log("Response:", await response.json());
+    await userStore.toggleFavorite(selectedRoute.value);
   } catch (error) {
-    console.error(error);
+    console.error("Failed to toggle favorite:", error);
   }
 };
 </script>
