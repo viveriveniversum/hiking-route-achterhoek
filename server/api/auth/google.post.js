@@ -1,4 +1,3 @@
-// server/api/auth/google.post.js
 import User from "~/models/User";
 import { decodeJwtResponse } from "~/utils/auth.js";
 
@@ -13,7 +12,7 @@ export default defineEventHandler(async (e) => {
       email: decodedToken.email,
     };
 
-    // Find existing user or create new one
+    // Existing user check/create new one
     let user = await User.findOne({ id: userData.id });
 
     if (!user) {
