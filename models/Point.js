@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const PointSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  id: { type: String, required: true, unique: true }, // point1,xx2,xx3...
   title: { type: String, required: true },
   description: { type: String },
   type: {

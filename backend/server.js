@@ -8,7 +8,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import path from "path";
 
-// Loading environment variables for backend
+// env variables for backend. to use process.env
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 dotenv.config({ path: path.join(__dirname, "../.env") });
@@ -16,17 +16,14 @@ dotenv.config({ path: path.join(__dirname, "../.env") });
 const app = express();
 const port = 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
 mongoose
   .connect(process.env.MONGO_KEY)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Routes
 app.get("/api/routes", async (req, res) => {
   try {
     const routes = await Route.find().lean();
@@ -54,10 +51,9 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: "Something broke!" });
+  res.status(500).json({ error: "Something went wrong!" });
 });
 
-// Starting server
 app
   .listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);

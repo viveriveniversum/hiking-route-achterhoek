@@ -1,4 +1,3 @@
-// models/Route.js
 import { Schema, model, mongoose } from "mongoose";
 
 const RoutePointSchema = new Schema({
@@ -7,7 +6,7 @@ const RoutePointSchema = new Schema({
 });
 
 const RouteSchema = new Schema({
-  id: { type: String, required: true, unique: true },
+  id: { type: String, required: true, unique: true }, // route1,xx2,xx3,...
   name: { type: String, required: true },
   description: { type: String },
   routePoints: [RoutePointSchema],
