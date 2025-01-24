@@ -1,20 +1,5 @@
-import mongoose from "mongoose";
 import Point from "~/models/Point";
-
-let isConnected = false;
-
-async function connectDB() {
-  if (isConnected) return;
-
-  try {
-    await mongoose.connect(import.meta.env.MONGO_KEY);
-    isConnected = true;
-    console.log("Connected to MongoDB");
-  } catch (error) {
-    console.error("MongoDB connection error:", error);
-    throw error;
-  }
-}
+import { connectDB } from "./utils/index.js";
 
 export default defineEventHandler(async (event) => {
   try {
