@@ -16,7 +16,13 @@
           v-for="(point, index) in selectedPoints"
           :key="index"
           :lat-lng="point"
-        />
+        >
+          <LPopup>
+            <div>
+              <strong>Point {{ index + 1 }}</strong>
+            </div>
+          </LPopup>
+        </LMarker>
         <LPolyline :lat-lngs="route" v-if="route.length" color="green" />
         <!-- Achterhoek Green :D -->
       </LMap>
